@@ -1,0 +1,36 @@
+---
+- name: Build and push Docker images to ACR
+  hosts: localhost
+  vars:
+    acr_name: "exampleacr3"  # Nombre de tu ACR
+    acr_login_server: "exampleacr3.azurecr.io"  # Servidor de login de tu ACR
+    acr_username: "exampleacr3"  # Usuario del ACR (puede obtenerlo con az acr credential show)
+  
+    images:
+      - name: mywebserver
+        tag: casopractico2
+        dockerfile: Dockerfile-web
+        context: .
+  tasks:
+    - name: Log in to Azure Container Registry
+      docker_login:
+        registry_url: "{{ acr_login_server }}"
+        username: "{{ acr_username }}"
+        password: "{{ acr_password }}"
+
+    - name: Build Docker image
+      docker_image:
+        name: "{{ item.name }}"
+        tag: "{{ item.tag }}"
+        build:
+          path: "{{ item.context }}"
+          dockerfile: "{{ item.dockerfile }}"
+      loop: "{{ images }}"
+
+    - name: Push Docker image to ACR
+      docker_image:
+        name: "{{ acr_login_server }}/{{ item.name }}"
+        tag: "{{ item.tag }}"
+        push: yes
+        source: "{{ item.name }}:{{ item.tag }}"
+      loop: "{{ images }}"
