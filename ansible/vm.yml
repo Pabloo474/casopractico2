@@ -1,0 +1,30 @@
+---
+- name: Desplegar aplicación Docker en VM
+  hosts: vm
+  become: yes
+  vars:
+    ansible_user : "adminuser"
+    acr_name: "exampleacr3"  # Nombre de tu ACR
+    acr_url: "exampleacr3.azurecr.io"  # Servidor de login de tu ACR
+    acr_username: "exampleacr3"  # Usuario del ACR 
+    acr_password: ""  # Contraseña del ACR 
+  tasks:
+
+    - name: Iniciar y habilitar Docker
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Iniciar sesión en el ACR
+      command: echo "your_password" | docker login exampleacr3.azurecr.io --username your_username --password-stdin
+
+    - name: Autenticar en el ACR
+      command: >
+        docker login {{ acr_url }} -u {{ acr_username }} -p {{ acr_password }}
+
+    - name: Descargar la imagen de Docker del ACR
+      command: docker pull exampleacr3.azurecr.io/casopractico2
+
+    - name: Ejecutar un contenedor Docker con Nginx
+      command: docker run -d --name nginx_container -p 80:80 exampleacr3.azurecr.io/casopractico2
